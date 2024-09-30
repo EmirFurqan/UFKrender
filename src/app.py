@@ -1,11 +1,3 @@
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return 'All is well...'
-
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -464,7 +456,7 @@ def get_applications():
 
 
 if __name__ == '__main__':
-    app.run(port=8080)
+    app.run(port=8080, debug=True, ssl_context=('/Users/emirfurkangokdemir/Desktop/YouTube-Python-Flask-AWS-main/src/cert.pem', '/Users/emirfurkangokdemir/Desktop/YouTube-Python-Flask-AWS-main/src/key.pem'))
 
 
 
