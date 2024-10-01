@@ -183,24 +183,31 @@ def upload_profile_picture():
         if file.filename == '':
             return jsonify({"message": "No selected file"}), 400
 
-        # Fotoğrafı yeniden boyutlandırma (örneğin, maksimum genişlik/yükseklik: 1024x1024)
+        # Open the image
         image = Image.open(file)
+
+        # Resize the image (for example, maximum width/height: 1024x1024)
         max_size = (1024, 1024)
-        image.thumbnail(max_size)  # Maksimum boyut ile yeniden boyutlandır
+        image.thumbnail(max_size)  # Resize the image
 
-        # Özel dosya adı oluşturma
-        extension = file.filename.rsplit('.', 1)[1].lower()  # Dosya uzantısını al
-        timestamp = int(time.time())  # Zaman damgası (epoch time)
-        filename = f"{timestamp}.{extension}"  # Yeni dosya adı
+        # Convert the image to RGB mode if it's in RGBA (or any other mode not supported by JPEG)
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
 
-        # Dosya yolunu oluştur ve kaydet
+        # Generate a custom file name
+        extension = file.filename.rsplit('.', 1)[1].lower()  # Get the file extension
+        timestamp = int(time.time())  # Epoch time as a timestamp
+        filename = f"{timestamp}.{extension}"  # Create the new file name
+
+        # Create the file path and save the image
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        image.save(file_path, format="JPEG", quality=85)  # JPEG formatında sıkıştırılmış şekilde kaydet
+        image.save(file_path, format="JPEG", quality=85)  # Save as JPEG with compression
 
+        # Update user information with the new profile picture URL
         user = users_collection.find_one({'email': email})
         if user:
             user_id = user.get('_id')
-            file_url = f'https://ufkrender.onrender.com/uploads/{filename}'  # Fotoğrafın erişim URL'si
+            file_url = f'https://ufkrender.onrender.com/uploads/{filename}'  # Access URL for the picture
             users_collection.update_one({'email': email}, {'$set': {'profile_picture': file_url}})
             files_collection.update_one({'user_id': user_id}, {'$set': {'file_path': file_url}}, upsert=True)
             return jsonify({"message": "Profile picture uploaded successfully"}), 200
@@ -211,6 +218,9 @@ def upload_profile_picture():
         return jsonify({"message": "Token has expired"}), 401
     except jwt.InvalidTokenError:
         return jsonify({"message": "Invalid token"}), 401
+    except Exception as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+
     
 
 @app.route('/verify-token', methods=['GET'])
@@ -392,13 +402,6 @@ def delete_job(job_id):
     return jsonify({"message": "Job not found"}), 404
 
 
-
-
-import os
-from werkzeug.utils import secure_filename
-from flask import request, jsonify
-from datetime import datetime as dt
-
 # Uploads folder configuration
 app.config['UPLOAD_FOLDER'] = os.path.abspath('./uploads')
 
@@ -429,7 +432,7 @@ def apply_job():
 
             # Save the file
             filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file_path = os.path.join("uploads", filename)
             
             try:
                 file.save(file_path)
