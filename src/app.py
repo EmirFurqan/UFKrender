@@ -200,7 +200,7 @@ def upload_profile_picture():
         user = users_collection.find_one({'email': email})
         if user:
             user_id = user.get('_id')
-            file_url = f'http://localhost:8080/uploads/{filename}'  # Fotoğrafın erişim URL'si
+            file_url = f'https://ufkrender.onrender.com/uploads/{filename}'  # Fotoğrafın erişim URL'si
             users_collection.update_one({'email': email}, {'$set': {'profile_picture': file_url}})
             files_collection.update_one({'user_id': user_id}, {'$set': {'file_path': file_url}}, upsert=True)
             return jsonify({"message": "Profile picture uploaded successfully"}), 200
@@ -394,46 +394,63 @@ def delete_job(job_id):
 
 
 
+import os
+from werkzeug.utils import secure_filename
+from flask import request, jsonify
+from datetime import datetime as dt
+
+# Uploads folder configuration
+app.config['UPLOAD_FOLDER'] = os.path.abspath('./uploads')
+
 @app.route('/apply-job', methods=['POST'])
 def apply_job():
-    # Başvuru form verilerini alın
+    # Get the form data
     form_data = request.form.to_dict()
     job_id = form_data.get('jobId')
 
-    # Eğer job_id yoksa, 400 hatası döndür
+    # Check if job_id is provided
     if not job_id:
         return jsonify({"message": "Job ID is required"}), 400
     
-    # Eğer CV dosyası varsa kontrol et
+    # Check if the CV file is present
     if 'cv' in request.files:
         file = request.files['cv']
         if file.filename == '':
-            # Dosya yoksa hata döndürme
-            form_data['cv_path'] = None  # CV yolu boş bırakılır
+            # If no file was uploaded, set cv_path to None
+            form_data['cv_path'] = None
         else:
-            # Sadece PDF dosyası yüklenmesine izin ver
+            # Allow only PDF files
             if not file.filename.endswith('.pdf'):
                 return jsonify({"message": "Only PDF files are allowed"}), 400
 
-            # Dosyayı yükle
+            # Ensure the uploads directory exists
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
+
+            # Save the file
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            form_data['cv_path'] = file_path  # CV yolunu kaydet
-
+            
+            try:
+                file.save(file_path)
+                form_data['cv_path'] = file_path  # Save the file path to form_data
+            except Exception as e:
+                return jsonify({"message": f"Error saving file: {str(e)}"}), 500
     else:
-        form_data['cv_path'] = None  # Eğer dosya yoksa, CV yolu None olarak ayarlanır
+        form_data['cv_path'] = None  # If no file, set cv_path to None
 
-    # Başvuru tarihini ayarla
+    # Set the application date
     form_data['application_date'] = dt.utcnow()
 
-    # Job ID'yi form verisine ekleyin
+    # Add the job_id to the form data
     form_data['job_id'] = job_id
 
-    # Başvuru verisini MongoDB'ye kaydedin
-    basvuru_collection.insert_one(form_data)
-
-    return jsonify({"message": "Application submitted successfully"}), 201
+    try:
+        # Save the application data to MongoDB
+        basvuru_collection.insert_one(form_data)
+        return jsonify({"message": "Application submitted successfully"}), 201
+    except Exception as e:
+        return jsonify({"message": f"Error saving application: {str(e)}"}), 500
 
 
 @app.route('/api/applications', methods=['GET'])
