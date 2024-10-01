@@ -57,11 +57,10 @@ def send_verification_email(to_email, token, name):
     msg.attach(MIMEText(body, 'plain'))
 
     try:
-        # Use SMTP with SSL for secure email sending (port 465)
-        with smtplib.SMTP_SSL('mail.kurumsaleposta.com', 465) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:  # Port 587 TLS için
+            server.starttls()
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, to_email, msg.as_string())
-        print('Email sent successfully')
     except Exception as e:
         print(f'Error: {e}')
 
