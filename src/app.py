@@ -48,7 +48,7 @@ def send_verification_email(to_email, token, name):
     sender_email = os.getenv('SENDER_EMAIL')
     sender_password = os.getenv('SENDER_PASSWORD')
     subject = 'Email Verification'
-    body = f'Sevgili {name}, sitemize kayıt olmuşsun. Yapman gereken son bir işlem kaldı. Şu linke tıklayarak hesabını doğrulayabilirsin: http://localhost:3000/verify-email?token={token}'
+    body = f'Sevgili {name}, sitemize kayıt olmuşsun. Yapman gereken son bir işlem kaldı. Şu linke tıklayarak hesabını doğrulayabilirsin: https://ufktakimi.com/verify-email?token={token}'
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
