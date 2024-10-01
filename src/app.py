@@ -21,7 +21,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = os.path.abspath('./uploads')
 
 # MongoDB bağlantısı
 uri = os.getenv('MONGO_URI')
@@ -456,7 +456,7 @@ def get_applications():
 
 
 if __name__ == '__main__':
-    app.run(port=8080, debug=True, ssl_context=('/Users/emirfurkangokdemir/Desktop/YouTube-Python-Flask-AWS-main/src/cert.pem', '/Users/emirfurkangokdemir/Desktop/YouTube-Python-Flask-AWS-main/src/key.pem'))
+    app.run(port=8080, debug=True)
 
 
 
