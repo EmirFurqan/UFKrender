@@ -471,6 +471,23 @@ def get_applications():
 
     return jsonify(applications_list), 200
 
+@app.route('/api/applications/<application_id>', methods=['PUT'])
+def update_application_status(application_id):
+    new_status = request.json.get('durum')
+    if not new_status:
+        return jsonify({"error": "Status is required"}), 400
+
+    result = basvuru_collection.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": {"durum": new_status}}
+    )
+
+    if result.modified_count == 0:
+        return jsonify({"error": "Application not found or status is the same"}), 404
+
+    return jsonify({"message": "Status updated successfully"}), 200
+
+
 
 
 
