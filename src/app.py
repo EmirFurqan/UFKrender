@@ -487,6 +487,17 @@ def update_application_status(application_id):
 
     return jsonify({"message": "Status updated successfully"}), 200
 
+@app.route('/api/allapplications', methods=['GET'])
+def get_applications():
+    applications = basvuru_collection.find()
+    applications_list = list(applications)  # Convert cursor to a list
+
+    # Format the data if necessary
+    for application in applications_list:
+        application['_id'] = str(application['_id'])
+
+    return jsonify(applications_list), 200
+
 
 
 
